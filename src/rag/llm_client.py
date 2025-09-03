@@ -75,13 +75,37 @@ class LLMClient:
                 references=[],
                 action_required="escalate_to_technical_team"
             )
+        
     def _get_system_prompt(self) -> str:
         """Get the system prompt that defines the AI's role and behavior.
         
         Returns:
             System prompt string
         """
-        pass
+        return """You are a knowledgeable customer support assistant for a domain registration and hosting company. Your role is to analyze customer support tickets and provide helpful, accurate responses based on company documentation and policies.
+
+                CRITICAL INSTRUCTIONS:
+                1. Always respond with valid JSON in the exact format specified
+                2. Base your answers on the provided documentation context
+                3. Be professional, empathetic, and solution-oriented
+                4. Recommend appropriate escalation actions when needed
+                5. Cite specific policy sections when relevant
+
+                Your response must be a valid JSON object with exactly these three fields:
+                - "answer": A helpful response to the customer's question or issue
+                - "references": An array of strings citing relevant documentation sources
+                - "action_required": One of the predefined action types
+
+                Valid action_required values:
+                - "escalate_to_technical_team"
+                - "escalate_to_abuse_team" 
+                - "escalate_to_billing_team"
+                - "escalate_to_management"
+                - "escalate_to_legal_team"
+                - "contact_customer_directly"
+                - "no_action_required"
+
+                Always respond with valid JSON only, no additional text or formatting."""
     
     def _build_mcp_prompt(self, ticket_text: str, context: str, references: list) -> str:
         """Build MCP-compliant prompt with clear structure.
@@ -94,6 +118,64 @@ class LLMClient:
         Returns:
             Formatted prompt string
         """
-        pass
+        prompt = f"""TASK: Analyze the customer support ticket and provide a structured response.
+
+                CONTEXT (Company Documentation):
+                {context}
+
+                CUSTOMER TICKET:
+                {ticket_text}
+
+                INSTRUCTIONS:
+                1. Analyze the customer's issue based on the provided documentation
+                2. Provide a helpful and professional response
+                3. Include relevant policy references
+                4. Determine the appropriate action required
+                5. Return response as valid JSON only
+
+                OUTPUT SCHEMA:
+                {{
+                    "answer": "Your helpful response to the customer",
+                    "references": ["List of relevant documentation sections"],
+                    "action_required": "appropriate_action_type"
+                }}
+
+                Generate the JSON response now:"""
+        
+        return prompt
     
+    def _determine_action_required(self, ticket_text: str, context: str) -> str:
+        """Determine the appropriate action based on ticket content.
+        
+        Args:
+            ticket_text: Customer ticket text
+            context: Retrieved context
+            
+        Returns:
+            Action required string
+        """
+        ticket_lower = ticket_text.lower()
+        
+        # Check for various escalation triggers
+        if any(keyword in ticket_lower for keyword in ["suspended", "suspension", "abuse", "policy violation"]):
+            return "escalate_to_abuse_team"
+        
+        elif any(keyword in ticket_lower for keyword in ["billing", "payment", "charge", "refund", "invoice"]):
+            return "escalate_to_billing_team"
+        
+        elif any(keyword in ticket_lower for keyword in ["dns", "nameserver", "technical", "not working", "error"]):
+            return "escalate_to_technical_team"
+        
+        elif any(keyword in ticket_lower for keyword in ["legal", "lawsuit", "court", "dmca"]):
+            return "escalate_to_legal_team"
+        
+        elif any(keyword in ticket_lower for keyword in ["manager", "complaint", "unsatisfied"]):
+            return "escalate_to_management"
+        
+        elif any(keyword in ticket_lower for keyword in ["urgent", "emergency", "asap"]):
+            return "contact_customer_directly"
+        
+        else:
+            return "no_action_required"
+
     

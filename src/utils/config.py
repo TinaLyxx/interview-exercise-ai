@@ -25,6 +25,10 @@ class Config:
     # API Configuration
     API_HOST: str = os.getenv("API_HOST", "0.0.0.0")
     API_PORT: int = int(os.getenv("API_PORT", "8000"))
+
+    # RAG Configuration
+    MAX_RELEVANT_CHUNKS: int = int(os.getenv("MAX_RELEVANT_CHUNKS", "5"))
+    SIMILARITY_THRESHOLD: float = float(os.getenv("SIMILARITY_THRESHOLD", "0.7"))
     
 
 # Global config instance

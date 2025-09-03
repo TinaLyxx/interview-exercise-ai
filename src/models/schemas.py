@@ -20,3 +20,11 @@ class DocumentChunk(BaseModel):
     content: str = Field(..., description="The text content of the document chunk")
     source: str = Field(..., description="The source file or section of the document")
     metadata: Optional[dict] = Field(default=None, description="Additional metadata about the chunk")
+
+class EmbeddingDocument(BaseModel):
+    """Model for documents with embeddings."""
+    chunk: DocumentChunk
+    embedding: List[float] = Field(..., description="Vector embedding of the document chunk")
+    
+    class Config:
+        arbitrary_types_allowed = True

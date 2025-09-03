@@ -132,3 +132,20 @@ async def get_stats(
             status_code=500,
             detail=f"Failed to retrieve system statistics: {str(e)}"
         )
+
+@app.post("/rebuild-knowledge-base")
+async def rebuild_knowledge_base(
+    assistant: KnowledgeAssistant = Depends(get_knowledge_assistant)
+):
+    """Rebuild the knowledge base from source documents."""
+    try:
+        logger.info("Starting knowledge base rebuild...")
+        result = assistant.rebuild_knowledge_base()
+        logger.info(f"Knowledge base rebuild completed: {result['status']}")
+        return result
+    except Exception as e:
+        logger.error(f"Failed to rebuild knowledge base: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to rebuild knowledge base: {str(e)}"
+        )

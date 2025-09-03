@@ -29,7 +29,9 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("Starting Knowledge Assistant...")
     try:
-      
+        # Validate configuration
+        config.validate()
+        
         # Initialize Knowledge Assistant
         knowledge_assistant = KnowledgeAssistant()
         logger.info("Knowledge Assistant initialized successfully")
@@ -61,11 +63,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 def get_knowledge_assistant() -> KnowledgeAssistant:
     """Dependency to get the Knowledge Assistant instance."""
     if knowledge_assistant is None:
         raise HTTPException(status_code=500, detail="Knowledge Assistant not initialized")
     return knowledge_assistant
+
+
+@app.get("/")
+async def root():
+    """Root endpoint with API information."""
+    return {
+        "message": "Knowledge Assistant API",
+        "version": "1.0.0",
+        "description": "AI-powered support ticket resolution system",
+        "endpoints": {
+            "resolve_ticket": "POST /resolve-ticket",
+            "health": "GET /health",
+            "stats": "GET /stats"
+        }
+    }
+
 
 @app.post("/resolve-ticket", response_model=TicketResponse)
 async def resolve_ticket(
@@ -96,6 +115,8 @@ async def resolve_ticket(
             status_code=500,
             detail=f"Failed to process support ticket: {str(e)}"
         )
+
+
 @app.get("/health")
 async def health_check(
     assistant: KnowledgeAssistant = Depends(get_knowledge_assistant)
@@ -118,6 +139,7 @@ async def health_check(
             }
         )
 
+
 @app.get("/stats")
 async def get_stats(
     assistant: KnowledgeAssistant = Depends(get_knowledge_assistant)
@@ -132,6 +154,7 @@ async def get_stats(
             status_code=500,
             detail=f"Failed to retrieve system statistics: {str(e)}"
         )
+
 
 @app.post("/rebuild-knowledge-base")
 async def rebuild_knowledge_base(
@@ -149,3 +172,13 @@ async def rebuild_knowledge_base(
             status_code=500,
             detail=f"Failed to rebuild knowledge base: {str(e)}"
         )
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(
+        "src.api.main:app",
+        host=config.API_HOST,
+        port=config.API_PORT,
+        reload=True
+    )

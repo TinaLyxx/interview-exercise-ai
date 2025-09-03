@@ -25,9 +25,13 @@ class LLMClient:
         if not self.api_key:
             raise ValueError("OpenAI API key is required")
         
-        # Initialize OpenAI client
-        self.client = openai.OpenAI(api_key=self.api_key)
-
+        # Initialize OpenAI client with timeout and retry settings
+        self.client = openai.OpenAI(
+            api_key=self.api_key,
+            timeout=30,
+            max_retries=3
+        )
+    
     def generate_response(self, ticket_text: str, context: str, references: list) -> TicketResponse:
         """Generate a support response using MCP-compliant prompting.
         
@@ -43,8 +47,8 @@ class LLMClient:
         prompt = self._build_mcp_prompt(ticket_text, context, references)
         
         try:
-            # Call OpenAI API
-            response = self.client.chat.completions.create(
+            # Call OpenAI API with exponential backoff for rate limiting
+            response = self._call_openai_with_backoff(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": self._get_system_prompt()},
@@ -70,14 +74,24 @@ class LLMClient:
                 action_required="escalate_to_technical_team"
             )
         
+        except openai.RateLimitError as e:
+            # Specific handling for rate limit errors
+            print(f"Rate limit exceeded: {e}")
+            return TicketResponse(
+                answer="I'm currently experiencing high demand. Please try again in a few minutes or contact our support team for immediate assistance.",
+                references=references or [],
+                action_required="escalate_to_technical_team"
+            )
+        
         except Exception as e:
             # General error handling
+            print(f"OpenAI API error: {e}")
             return TicketResponse(
                 answer="I'm experiencing technical difficulties. Please try again or contact our support team for immediate assistance.",
                 references=[],
                 action_required="escalate_to_technical_team"
             )
-        
+    
     def _get_system_prompt(self) -> str:
         """Get the system prompt that defines the AI's role and behavior.
         
@@ -179,5 +193,33 @@ class LLMClient:
         
         else:
             return "no_action_required"
-
     
+    def _call_openai_with_backoff(self, **kwargs):
+        """Call OpenAI API with exponential backoff for rate limiting.
+        
+        Args:
+            **kwargs: Arguments to pass to the OpenAI API call
+            
+        Returns:
+            OpenAI API response
+        """
+        max_retries = 5
+        base_delay = 1
+        
+        for attempt in range(max_retries):
+            try:
+                return self.client.chat.completions.create(**kwargs)
+            
+            except openai.RateLimitError as e:
+                if attempt == max_retries - 1:
+                    # Last attempt failed, re-raise the exception
+                    raise e
+                
+                # Calculate exponential backoff delay
+                delay = base_delay * (2 ** attempt)
+                print(f"Rate limit hit, retrying in {delay} seconds (attempt {attempt + 1}/{max_retries})")
+                time.sleep(delay)
+            
+            except Exception as e:
+                # For other exceptions, don't retry
+                raise e

@@ -136,3 +136,15 @@ class FAISSVectorStore:
         except Exception as e:
             print(f"Error loading vector store: {e}")
             return False
+
+    def get_stats(self) -> dict:
+        """Get statistics about the vector store.
+        
+        Returns:
+            Dictionary with vector store statistics
+        """
+        return {
+            "total_documents": len(self.documents),
+            "embedding_dimension": self.embedding_dimension,
+            "index_size": self.index.ntotal
+        }

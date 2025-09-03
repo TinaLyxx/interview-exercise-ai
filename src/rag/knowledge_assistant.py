@@ -46,7 +46,7 @@ class KnowledgeAssistant:
         )
         
         return response
-
+    
     def get_system_stats(self) -> dict:
         """Get system statistics and health information.
         
@@ -66,5 +66,25 @@ class KnowledgeAssistant:
                 }
             }
         }
-
     
+    def rebuild_knowledge_base(self) -> dict:
+        """Rebuild the knowledge base from documents.
+        
+        Returns:
+            Status information about the rebuild
+        """
+        try:
+            self.retriever.rebuild_index()
+            stats = self.retriever.get_stats()
+            
+            return {
+                "status": "success",
+                "message": "Knowledge base rebuilt successfully",
+                "stats": stats
+            }
+        
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": f"Failed to rebuild knowledge base: {str(e)}"
+            }

@@ -32,7 +32,7 @@ EXPOSE 8000
 # Set environment variables
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
-ENV OPENAI_MODEL=gpt-3.5-turbo
+ENV OPENAI_MODEL=gpt-4o-mini
 ENV EMBEDDING_MODEL=all-MiniLM-L6-v2
 ENV VECTOR_DB_PATH=/app/data/vector_db
 ENV DOCS_PATH=/app/data/docs

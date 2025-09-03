@@ -94,6 +94,41 @@ class DocumentRetriever:
         
         return "\n".join(context_parts)
     
+    def get_references(self, query: str, max_chunks: int = None) -> List[str]:
+        """Get list of reference sources for a query.
+        
+        Args:
+            query: The user query
+            max_chunks: Maximum number of chunks to consider
+            
+        Returns:
+            List of reference source names
+        """
+        relevant_docs = self.retrieve_relevant_context(query, max_chunks)
+        
+        references = []
+        for doc, score in relevant_docs:
+            if doc.source not in references:
+                references.append(doc.source)
+        
+        return references
     
+    def rebuild_index(self) -> None:
+        """Rebuild the vector store index from scratch."""
+        print("Rebuilding vector store index...")
+        self._build_vector_store()
+    
+    def get_stats(self) -> dict:
+        """Get retrieval system statistics.
+        
+        Returns:
+            Dictionary with system statistics
+        """
+        vector_stats = self.vector_store.get_stats()
+        return {
+            "docs_path": self.docs_path,
+            "vector_store_path": self.vector_store_path,
+            **vector_stats
+        }
     
     

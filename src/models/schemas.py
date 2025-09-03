@@ -14,3 +14,9 @@ class TicketResponse(BaseModel):
     answer: str = Field(..., description="The generated response to the support ticket")
     references: List[str] = Field(..., description="List of referenced documentation sections")
     action_required: str = Field(..., description="Required action for the support team")
+
+class DocumentChunk(BaseModel):
+    """Model for document chunks used in RAG."""
+    content: str = Field(..., description="The text content of the document chunk")
+    source: str = Field(..., description="The source file or section of the document")
+    metadata: Optional[dict] = Field(default=None, description="Additional metadata about the chunk")

@@ -73,6 +73,27 @@ class DocumentRetriever:
         
         return results
     
+    def get_context_string(self, query: str, max_chunks: int = None) -> str:
+        """Get formatted context string for LLM prompt.
+        
+        Args:
+            query: The user query
+            max_chunks: Maximum number of chunks to include
+            
+        Returns:
+            Formatted context string
+        """
+        relevant_docs = self.retrieve_relevant_context(query, max_chunks)
+        
+        if not relevant_docs:
+            return "No relevant documentation found."
+        
+        context_parts = []
+        for i, (doc, score) in enumerate(relevant_docs, 1):
+            context_parts.append(f"Source {i}: {doc.source}\n{doc.content}\n")
+        
+        return "\n".join(context_parts)
+    
     
     
     

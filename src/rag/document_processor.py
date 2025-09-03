@@ -53,13 +53,14 @@ class DocumentProcessor:
         chunks = []
         for section_title, section_content in sections:
             if section_content.strip():
+                stripped_content = section_content.strip()
                 chunk = DocumentChunk(
-                    content=section_content.strip(),
+                    content=stripped_content,
                     source=f"{file_path.name}: {section_title}",
                     metadata={
                         "file": str(file_path.name),
                         "section": section_title,
-                        "length": len(section_content)
+                        "length": len(stripped_content)
                     }
                 )
                 chunks.append(chunk)

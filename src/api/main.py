@@ -96,3 +96,39 @@ async def resolve_ticket(
             status_code=500,
             detail=f"Failed to process support ticket: {str(e)}"
         )
+@app.get("/health")
+async def health_check(
+    assistant: KnowledgeAssistant = Depends(get_knowledge_assistant)
+):
+    """Health check endpoint."""
+    try:
+        stats = assistant.get_system_stats()
+        return {
+            "status": "healthy",
+            "timestamp": "2024-01-01T00:00:00Z",  # Would use actual timestamp in production
+            "version": "1.0.0"
+        }
+    except Exception as e:
+        logger.error(f"Health check failed: {e}")
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "unhealthy",
+                "error": str(e)
+            }
+        )
+
+@app.get("/stats")
+async def get_stats(
+    assistant: KnowledgeAssistant = Depends(get_knowledge_assistant)
+):
+    """Get system statistics."""
+    try:
+        stats = assistant.get_system_stats()
+        return stats
+    except Exception as e:
+        logger.error(f"Failed to get stats: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve system statistics: {str(e)}"
+        )

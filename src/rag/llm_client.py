@@ -2,10 +2,12 @@
 LLM client for generating responses using OpenAI GPT with MCP-compliant prompting.
 """
 import json
+import time
 import openai
 from typing import Dict, Any, Optional
 from src.utils.config import config
 from src.models.schemas import TicketResponse
+
 
 class LLMClient:
     """OpenAI GPT client for generating support responses."""

@@ -140,6 +140,23 @@ class TestFAISSVectorStore:
         
         assert loaded is False
     
+    def test_get_stats(self, temp_index_path, sample_documents):
+        """Test getting vector store statistics."""
+        vector_store = FAISSVectorStore(index_path=temp_index_path)
+        
+        # Get stats with empty store
+        stats_empty = vector_store.get_stats()
+        assert stats_empty["total_documents"] == 0
+        assert stats_empty["index_size"] == 0
+        assert "embedding_dimension" in stats_empty
+        
+        # Add documents and get stats
+        vector_store.add_documents(sample_documents)
+        stats_populated = vector_store.get_stats()
+        
+        assert stats_populated["total_documents"] == len(sample_documents)
+        assert stats_populated["index_size"] == len(sample_documents)
+        assert stats_populated["embedding_dimension"] > 0
     
     def test_threshold_filtering(self, temp_index_path, sample_documents):
         """Test that threshold filtering works correctly."""

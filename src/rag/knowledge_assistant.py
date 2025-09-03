@@ -5,7 +5,7 @@ from typing import Optional
 from src.models.schemas import TicketRequest, TicketResponse
 from src.rag.retriever import DocumentRetriever
 from src.rag.llm_client import LLMClient
-
+from src.utils.config import config
 
 
 class KnowledgeAssistant:
@@ -36,12 +36,35 @@ class KnowledgeAssistant:
         
         # Step 1: Retrieve relevant context using RAG
         context = self.retriever.get_context_string(ticket_text)
+        references = self.retriever.get_references(ticket_text)
         
         # Step 2: Generate response using LLM with retrieved context
         response = self.llm_client.generate_response(
             ticket_text=ticket_text,
-            context=context
+            context=context,
+            references=references
         )
         
         return response
+
+    def get_system_stats(self) -> dict:
+        """Get system statistics and health information.
+        
+        Returns:
+            Dictionary with system statistics
+        """
+        retriever_stats = self.retriever.get_stats()
+        
+        return {
+            "status": "healthy",
+            "components": {
+                "retriever": retriever_stats,
+                "llm_model": self.llm_client.model,
+                "config": {
+                    "max_chunks": config.MAX_RELEVANT_CHUNKS,
+                    "similarity_threshold": config.SIMILARITY_THRESHOLD
+                }
+            }
+        }
+
     

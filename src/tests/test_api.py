@@ -72,6 +72,42 @@ class TestAPI:
         
         # Verify mock was called
         mock_knowledge_assistant.resolve_ticket.assert_called_once()
+
+    @patch('src.api.main.knowledge_assistant')
+    def test_health_check_success(self, mock_assistant_global, client, mock_knowledge_assistant):
+        """Test successful health check."""
+        with patch('src.api.main.get_knowledge_assistant', return_value=mock_knowledge_assistant):
+            response = client.get("/health")
+        
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "healthy"
+        assert "version" in data
+    
+    @patch('src.api.main.knowledge_assistant')
+    def test_health_check_failure(self, mock_assistant_global, client, mock_knowledge_assistant):
+        """Test health check with system failure."""
+        mock_knowledge_assistant.get_system_stats.side_effect = Exception("System error")
+        
+        with patch('src.api.main.get_knowledge_assistant', return_value=mock_knowledge_assistant):
+            response = client.get("/health")
+        
+        assert response.status_code == 503
+        data = response.json()
+        assert data["status"] == "unhealthy"
+    
+    @patch('src.api.main.knowledge_assistant')
+    def test_get_stats_success(self, mock_assistant_global, client, mock_knowledge_assistant):
+        """Test getting system statistics."""
+        with patch('src.api.main.get_knowledge_assistant', return_value=mock_knowledge_assistant):
+            response = client.get("/stats")
+        
+        assert response.status_code == 200
+        data = response.json()
+        assert "status" in data
+        assert "components" in data
+        
+        mock_knowledge_assistant.get_system_stats.assert_called_once()
     
     @patch('src.api.main.knowledge_assistant')
     def test_resolve_ticket_invalid_input(self, mock_assistant_global, client):

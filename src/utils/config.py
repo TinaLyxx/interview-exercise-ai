@@ -3,7 +3,10 @@ Configuration management for the Knowledge Assistant.
 """
 import os
 from typing import Optional
+from dotenv import load_dotenv
 
+# Load environment variables from .env file
+load_dotenv()
 
 
 class Config:
@@ -25,11 +28,18 @@ class Config:
     # API Configuration
     API_HOST: str = os.getenv("API_HOST", "0.0.0.0")
     API_PORT: int = int(os.getenv("API_PORT", "8000"))
-
+    
     # RAG Configuration
     MAX_RELEVANT_CHUNKS: int = int(os.getenv("MAX_RELEVANT_CHUNKS", "5"))
     SIMILARITY_THRESHOLD: float = float(os.getenv("SIMILARITY_THRESHOLD", "0.7"))
     
+    @classmethod
+    def validate(cls) -> bool:
+        """Validate that required configuration is present."""
+        if not cls.OPENAI_API_KEY:
+            raise ValueError("OPENAI_API_KEY is required")
+        return True
+
 
 # Global config instance
 config = Config()

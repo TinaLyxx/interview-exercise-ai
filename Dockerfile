@@ -32,7 +32,7 @@ EXPOSE 8000
 # Set environment variables
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
-ENV OPENAI_MODEL=gpt-4o-mini
+ENV OPENAI_MODEL=gpt-3.5-turbo
 ENV EMBEDDING_MODEL=all-MiniLM-L6-v2
 ENV VECTOR_DB_PATH=/app/data/vector_db
 ENV DOCS_PATH=/app/data/docs
@@ -41,6 +41,10 @@ ENV API_PORT=8000
 ENV MAX_RELEVANT_CHUNKS=5
 ENV SIMILARITY_THRESHOLD=0.7
 
+# Add health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
 
 # Run the application
 CMD ["python", "-m", "uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+

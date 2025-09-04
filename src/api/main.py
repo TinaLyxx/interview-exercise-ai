@@ -80,6 +80,7 @@ async def root():
         "description": "AI-powered support ticket resolution system",
         "endpoints": {
             "resolve_ticket": "POST /resolve-ticket",
+            "rebuild_knowledge_base": "POST /rebuild-knowledge-base",
             "health": "GET /health",
             "stats": "GET /stats"
         }

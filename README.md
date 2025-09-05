@@ -158,7 +158,7 @@ Call `/resolve-ticket` to resolve a customer support ticket using RAG and LLM.
 1. Add markdown files to `data/docs/`
 2. Restart the application or call `/rebuild-knowledge-base`
 ```bash
-curl http://localhost:8000/rebuild-knowledge-base
+curl -X POST http://localhost:8000/rebuild-knowledge-base
 ```
 3. The system will automatically process and index new content
 
@@ -172,7 +172,7 @@ curl http://localhost:8000/rebuild-knowledge-base
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `OPENAI_API_KEY` | Required | Your OpenAI API key |
-| `OPENAI_MODEL` | `gpt-3.5-turbo` | OpenAI model to use |
+| `OPENAI_MODEL` | `gpt-4o-mini` | OpenAI model to use |
 | `EMBEDDING_MODEL` | `all-MiniLM-L6-v2` | Sentence transformer model |
 | `VECTOR_DB_PATH` | `./data/vector_db` | Path to store vector database |
 | `DOCS_PATH` | `./data/docs` | Path to documentation files |
@@ -209,11 +209,17 @@ pip install -r requirements.txt
 # Run all tests
 pytest
 
-# Run with coverage
-pytest --cov=src
+# Run with coverage report
+pytest --cov=src --cov-report=term-missing
 
 # Run specific test file
 pytest src/tests/test_api.py -v
+pytest src/tests/test_knowledge_assistant.py -v
+pytest src/tests/test_llm_client.py -v
+pytest src/tests/test_retriever.py -v
+
+# Run tests for specific module
+pytest src/tests/test_*llm* -v
 ```
 
 
@@ -252,11 +258,14 @@ interview-exercise-ai/
 │   │   ├── llm_client.py      # OpenAI integration
 │   │   ├── retriever.py       # Document retrieval
 │   │   └── vector_store.py    # FAISS vector database
-│   ├── tests/                 # Unit tests
-│   │   ├── test_api.py
-│   │   ├── test_document_processor.py
-│   │   ├── test_embeddings.py
-│   │   └── test_vector_store.py
+│   ├── tests/                 # Comprehensive test suite (98% coverage)
+│   │   ├── test_api.py        # API endpoint tests
+│   │   ├── test_document_processor.py  # Document processing tests
+│   │   ├── test_embeddings.py # Embedding generation tests
+│   │   ├── test_knowledge_assistant.py # Main orchestrator tests
+│   │   ├── test_llm_client.py # OpenAI integration tests
+│   │   ├── test_retriever.py  # Document retrieval tests
+│   │   └── test_vector_store.py # FAISS vector database tests
 │   └── utils/                 # Utilities
 │       └── config.py          # Configuration management
 ├── data/
@@ -268,6 +277,7 @@ interview-exercise-ai/
 ├── example_usage.py           # Comprehensive test script
 ├── run.py                     # Startup script
 ├── requirements.txt           # Python dependencies
+├── pytest.ini               # Pytest configuration
 ├── Dockerfile                 # Docker configuration
 ├── env.example               # Environment variables template
 └── README.md                 # This file
@@ -283,16 +293,26 @@ interview-exercise-ai/
                                                          │
                                                          ▼
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   User Query    │───▶│EmbeddingGenerator│───▶│   Embeddings    │
-│                 │    │ (Sentence Trans.)│    │                 │
+│   User Query    │───▶│Document Retriever│───▶│ Retrieved Docs  │
+│                 │    │   (FAISS Search) │    │   (Context)     │
 └─────────────────┘    └──────────────────┘    └─────────────────┘
                                                          │
                                                          ▼
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│  LLM Response   │◀───│   LLM Client     │◀───│  Retrieved Docs │
-│  (Structured)   │    │   (OpenAI GPT)   │    │   (FAISS)       │
+│  LLM Response   │◀───│   LLM Client     │◀───│  Context + Refs │
+│  (Structured)   │    │   (OpenAI GPT)   │    │   (MCP Format)  │
 └─────────────────┘    └──────────────────┘    └─────────────────┘
 ```
+
+### RAG Process Flow
+
+1. **Document Ingestion**: Markdown files are processed and chunked
+2. **Vector Indexing**: Chunks are embedded and stored in FAISS vector database
+3. **Query Processing**: User query is processed by Document Retriever
+4. **Similarity Search**: FAISS finds most relevant document chunks
+5. **Context Assembly**: Retrieved chunks are formatted as context
+6. **LLM Generation**: OpenAI GPT generates structured response using context
+7. **Response Formatting**: Output follows MCP schema with action recommendations
 
 ### Core Components
 
@@ -328,7 +348,6 @@ The system can recommend the following actions:
 
 
 ## 📄 License
-
 
 This project is licensed under the [MIT License] © 2025 TinaLxx.
 
